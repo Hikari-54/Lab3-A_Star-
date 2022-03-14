@@ -1,5 +1,7 @@
 package com.hikari;
 
+import java.util.HashMap;
+
 /**
  * Этот класс хранит базовое состояние, необходимое алгоритму А* для расчета пути по карте.
  * Это состояние включает коллекцию "Открытых путевых точек" и другую коллекцию "Закрытых путевых точек".
@@ -11,6 +13,11 @@ public class AStarState
     /** Это ссылка на карту, по которой перемещается алгоритм А*. **/
     private Map2D map;
 
+    /** Я проинициализировал две хэш-мапы, одну для открытых вершин, другую для закрытых.
+     * Ключом служит <Location>(местоположение вершины) , а значением <Waypoint>(сама вершина) **/
+
+    private HashMap<Location, Waypoint> openWaypoints = new HashMap<>();
+    private HashMap<Location, Waypoint> closedWaypoints = new HashMap<>();
 
     /**
      * Инициализация нового объекта состояния для работы А*.
@@ -35,51 +42,74 @@ public class AStarState
      **/
     public Waypoint getMinOpenWaypoint()
     {
-        // TODO:  Implement.
-        return null;
+        /** Если доступных открытых вершин нет - вернет null. **/
+        if (numOpenWaypoints() == 0) {
+            return null;
+        }
+
+        Waypoint minWaypoint = null;
+        float min = Float.MAX_VALUE;
+        /** Перебирает все открытые вершины и ищет ту, у которой минимальная цена перемещения. **/
+        for (Waypoint waypoint : openWaypoints.values()) {
+            float cost = waypoint.getTotalCost();
+            if (cost < min) {
+                min = cost;
+                minWaypoint = waypoint;
+            }
+        }
+        return minWaypoint;
     }
 
     /**
-     *
-     * This method adds a waypoint to (or potentially updates a waypoint already
-     * in) the "open waypoints" collection.  If there is not already an open
-     * waypoint at the new waypoint's location then the new waypoint is simply
-     * added to the collection.  However, if there is already a waypoint at the
-     * new waypoint's location, the new waypoint replaces the old one <em>only
-     * if</em> the new waypoint's "previous cost" value is less than the current
-     * waypoint's "previous cost" value.
+     * Этот метод добавляет путевую точку (или потенциально заменяет уже существующую
+     * путевую точку) в коллекцию "Открытых путевых точек".
+     * Если этой путевой точки еще нет в коллекции "Открытых путевых точек", то он просто добавит её.
+     * Однако если в этом месте расположения уже существует путевая точка, то новая точка
+     * заменяет старую только в том случае, если значение "предыдущей стоимости"
+     * новой точки меньше, чем значение "предыдущей стоимости" новой точки.
      **/
     public boolean addOpenWaypoint(Waypoint newWP)
     {
-        // TODO:  Implement.
+        Waypoint openWP = openWaypoints.get(newWP.loc);
+        /** Добавляет новую путевую точку только в том случае, если существующая вершина хуже новой.
+         * Либо если еще нет вершины с данным расположением **/
+        if (openWP == null || newWP.getPreviousCost() < openWP.getPreviousCost()) {
+            openWaypoints.put(newWP.loc, newWP);
+            return true;
+        }
         return false;
     }
 
 
-    /** Returns the current number of open waypoints. **/
+    /** Возвращает текущее кол-во открытых путевых точек. **/
     public int numOpenWaypoints()
     {
-        // TODO:  Implement.
-        return 0;
+        return openWaypoints.size();
     }
 
 
     /**
-     * This method moves the waypoint at the specified location from the
-     * open list to the closed list.
+     * Этот метод перемещает путевую точку в Указанной локации
+     * из открытого списка в закрытый список
      **/
     public void closeWaypoint(Location loc)
     {
-        // TODO:  Implement.
+        /** Удаляет вершину с указанным ключом из открытых вершин. **/
+        Waypoint waypoint = openWaypoints.remove(loc);
+        if (openWaypoints != null) {
+            /** Переносит его(добавляет) в коллекцию закрытых вершин. **/
+            closedWaypoints.put(loc, waypoint);
+        }
     }
 
     /**
-     * Returns true if the collection of closed waypoints contains a waypoint
-     * for the specified location.
+     * Возвращает true, если коллекция закрытых путевых точек содержит
+     * путевую точку для указанного местоположения.
      **/
     public boolean isLocationClosed(Location loc)
     {
-        // TODO:  Implement.
-        return false;
+        /** Метод containsKey() ищет заданный ключ (loc) в коллекции закрытых путевых вершин.
+         * Если он есть - true, если нет - false **/
+        return closedWaypoints.containsKey(loc);
     }
 }
